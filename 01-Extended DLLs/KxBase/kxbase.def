@@ -45,6 +45,7 @@ EXPORTS
 
 	;; file.c
 	GetOverlappedResultEx
+	DeviceIoControl						= Ext_DeviceIoControl
 	CreateFile2
 	GetTempPath2A
 	GetTempPath2W

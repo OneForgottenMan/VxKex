@@ -224,7 +224,7 @@
 #pragma comment(linker, "/EXPORT:DeleteTimerQueueTimer=kernel32.DeleteTimerQueueTimer")
 #pragma comment(linker, "/EXPORT:DeleteVolumeMountPointA=kernel32.DeleteVolumeMountPointA")
 #pragma comment(linker, "/EXPORT:DeleteVolumeMountPointW=kernel32.DeleteVolumeMountPointW")
-#pragma comment(linker, "/EXPORT:DeviceIoControl=kernel32.DeviceIoControl")
+//#pragma comment(linker, "/EXPORT:DeviceIoControl=kernel32.DeviceIoControl")
 #pragma comment(linker, "/EXPORT:DisableThreadLibraryCalls=kernel32.DisableThreadLibraryCalls")
 #pragma comment(linker, "/EXPORT:DisableThreadProfiling=kernel32.DisableThreadProfiling")
 #pragma comment(linker, "/EXPORT:DisassociateCurrentThreadFromCallback=kernel32.DisassociateCurrentThreadFromCallback")

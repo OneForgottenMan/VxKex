@@ -50,6 +50,63 @@ KXBASEAPI BOOL GetOverlappedResultEx(
 	return (BaseSetLastNTError(status));
 }
 
+// Implementation taken from Wine (https://github.com/wine-mirror/wine/blob/master/dlls/kernelbase/file.c#L4237)
+KXBASEAPI BOOL Ext_DeviceIoControl(
+	IN HANDLE hDevice,
+	IN DWORD dwIoControlCode,
+	IN LPVOID lpInBuffer OPTIONAL,
+	IN DWORD nInBufferSize,
+	OUT LPVOID lpOutBuffer OPTIONAL,
+	IN DWORD nOutBufferSize,
+	OUT LPDWORD lpBytesReturned OPTIONAL,
+	IN OUT LPOVERLAPPED lpOverlapped OPTIONAL)
+{
+	IO_STATUS_BLOCK iosb, *pIoUsb = &iosb;
+	void* cvalue = NULL;
+	HANDLE hEvent = NULL;
+	NTSTATUS status;
+
+	if (lpOverlapped)
+	{
+		pIoUsb = (IO_STATUS_BLOCK*)lpOverlapped;
+		if (!((ULONG_PTR)lpOverlapped->hEvent & 1)) cvalue = lpOverlapped;
+		hEvent = lpOverlapped->hEvent;
+		lpOverlapped->Internal = STATUS_PENDING;
+		lpOverlapped->InternalHigh = 0;
+	}
+
+	if (HIWORD(dwIoControlCode) == FILE_DEVICE_FILE_SYSTEM) {
+		status = NtFsControlFile(
+			hDevice,
+			hEvent,
+			NULL,
+			cvalue,
+			pIoUsb,
+			dwIoControlCode,
+			lpInBuffer,
+			nInBufferSize,
+			lpOutBuffer,
+			nOutBufferSize);
+	}
+	else {
+		status = NtDeviceIoControlFile(
+			hDevice,
+			hEvent,
+			NULL,
+			cvalue,
+			pIoUsb,
+			dwIoControlCode,
+			lpInBuffer,
+			nInBufferSize,
+			lpOutBuffer,
+			nOutBufferSize);
+	}
+
+	if (lpBytesReturned && !NT_ERROR(status)) *lpBytesReturned = (DWORD)pIoUsb->Information;
+	if (status == STATUS_PENDING || !NT_SUCCESS(status)) return BaseSetLastNTError(status);
+	return TRUE;
+}
+
 KXBASEAPI HANDLE WINAPI CreateFile2(
 	IN	PCWSTR								FileName,
 	IN	ULONG								DesiredAccess,
