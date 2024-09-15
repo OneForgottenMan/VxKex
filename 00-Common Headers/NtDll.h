@@ -46,7 +46,10 @@
 
 #pragma region Macro Definitions
 
-#define NT_SUCCESS(st) (((NTSTATUS) (st)) >= 0)
+#define NT_SUCCESS(status)      (((NTSTATUS)(status)) >= 0)
+#define NT_INFORMATION(status)  ((((NTSTATUS)(status)) & 0xc0000000) == 0x40000000)
+#define NT_WARNING(status)      ((((NTSTATUS)(status)) & 0xc0000000) == 0x80000000)
+#define NT_ERROR(status)        ((((NTSTATUS)(status)) & 0xc0000000) == 0xc0000000)
 
 #define HARDERROR_OVERRIDE_ERRORMODE		0x10000000L
 
