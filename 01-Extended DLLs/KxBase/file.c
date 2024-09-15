@@ -1,6 +1,55 @@
 #include "buildcfg.h"
 #include "kxbasep.h"
 
+#define _LOAD32_NO_FENCE(src) (*(src))
+#pragma intrinsic(_ReadWriteBarrier)
+
+static __forceinline LONG ReadAcquire(LONG const volatile* src) {
+	LONG value = _LOAD32_NO_FENCE(src);
+	_ReadWriteBarrier();
+	return (value);
+}
+
+// Implementation taken from Wine (https://github.com/wine-mirror/wine/blob/master/dlls/kernelbase/file.c#L3256)
+KXBASEAPI BOOL GetOverlappedResultEx(
+	IN HANDLE hFile,
+	IN LPOVERLAPPED lpOverlapped,
+	OUT LPDWORD lpNumberOfBytesTransferred,
+	IN DWORD dwMilliseconds,
+	IN BOOL bAlertable)
+{
+	NTSTATUS status;
+	DWORD ret;
+
+	status = ReadAcquire((LONG*)&lpOverlapped->Internal);
+	if (status == STATUS_PENDING) {
+		if (dwMilliseconds == 0) {
+			SetLastError(ERROR_IO_INCOMPLETE);
+			return (FALSE);
+		}
+		ret = WaitForSingleObjectEx(
+			lpOverlapped->hEvent ? lpOverlapped->hEvent : hFile,
+			dwMilliseconds,
+			bAlertable
+		);
+		if (ret == WAIT_FAILED) {
+			return (FALSE);
+		}
+		if (ret) {
+			SetLastError(ret);
+			return (FALSE);
+		}
+
+		status = (NTSTATUS)lpOverlapped->Internal;
+		if (status == STATUS_PENDING) {
+			status = STATUS_SUCCESS;
+		}
+	}
+
+	*lpNumberOfBytesTransferred = (DWORD)lpOverlapped->InternalHigh;
+	return (BaseSetLastNTError(status));
+}
+
 KXBASEAPI HANDLE WINAPI CreateFile2(
 	IN	PCWSTR								FileName,
 	IN	ULONG								DesiredAccess,

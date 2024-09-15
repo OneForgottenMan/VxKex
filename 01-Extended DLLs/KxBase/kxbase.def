@@ -44,6 +44,7 @@ EXPORTS
 	GetFirmwareType
 
 	;; file.c
+	GetOverlappedResultEx
 	CreateFile2
 	GetTempPath2A
 	GetTempPath2W
